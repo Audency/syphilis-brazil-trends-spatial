@@ -1,6 +1,6 @@
 # ============================================================================
-# PROJETO: Tendência Temporal e Padrões Espaciais da Sífilis Gestacional
-#          e Congênita no Brasil: Uma Análise Baseada na Vulnerabilidade
+# PROJETO: Tendência Temporal e Padrões Espaciais da Sífilis Gestational
+#          e Congenital no Brasil: Uma Análise Baseada na Vulnerabilidade
 #          Social e Territorial (2007–2023)
 #
 # SCRIPT ÚNICO: Pipeline analítica completa
@@ -114,29 +114,29 @@ UF_SIGLA <- c(
 get_macrorregiao <- function(cod_uf) {
   cod2 <- as.integer(substr(as.character(cod_uf), 1, 2))
   case_when(
-    cod2 %in% c(11,12,13,14,15,16,17) ~ "Norte",
-    cod2 %in% c(21,22,23,24,25,26,27,28,29) ~ "Nordeste",
-    cod2 %in% c(31,32,33,35) ~ "Sudeste",
-    cod2 %in% c(41,42,43) ~ "Sul",
-    cod2 %in% c(50,51,52,53) ~ "Centro-Oeste",
+    cod2 %in% c(11,12,13,14,15,16,17) ~ "North",
+    cod2 %in% c(21,22,23,24,25,26,27,28,29) ~ "Northeast",
+    cod2 %in% c(31,32,33,35) ~ "Southeast",
+    cod2 %in% c(41,42,43) ~ "South",
+    cod2 %in% c(50,51,52,53) ~ "Central-West",
     TRUE ~ NA_character_
   )
 }
 
 # Rótulos raça/cor SINAN
 RACA_COR_LABELS <- c(
-  "1" = "Branca", "2" = "Preta", "3" = "Amarela",
-  "4" = "Parda",  "5" = "Indígena", "9" = "Ignorado"
+  "1" = "White", "2" = "Black", "3" = "Asian",
+  "4" = "Mixed-race",  "5" = "Indigenous", "9" = "Unknown"
 )
 
 # Cores
 cores_raca <- c(
-  "Branca" = "#4575B4", "Preta" = "#D73027", "Parda" = "#FC8D59",
-  "Amarela" = "#FEE090", "Indígena" = "#91BFDB", "Ignorado" = "#BDBDBD"
+  "White" = "#4575B4", "Black" = "#D73027", "Mixed-race" = "#FC8D59",
+  "Asian" = "#FEE090", "Indigenous" = "#91BFDB", "Unknown" = "#BDBDBD"
 )
 cores_regiao <- c(
-  "Norte" = "#1B9E77", "Nordeste" = "#D95F02", "Sudeste" = "#7570B3",
-  "Sul" = "#E7298A", "Centro-Oeste" = "#66A61E"
+  "North" = "#1B9E77", "Northeast" = "#D95F02", "Southeast" = "#7570B3",
+  "South" = "#E7298A", "Central-West" = "#66A61E"
 )
 
 # Tema ggplot para publicação — sem título, sem grelha (clean)
@@ -167,7 +167,7 @@ message("=== Setup concluído. Período de estudo: ", ANO_INICIO, "–", ANO_FIM
 ###############################################################################
 
 # -------------------------------------------------------------------------
-# 1.1 Download de microdados SINAN — Sífilis Gestacional (SIFG)
+# 1.1 Download de microdados SINAN — Sífilis Gestational (SIFG)
 # -------------------------------------------------------------------------
 # Os arquivos DBC estão no FTP do DataSUS
 # Padrão: SIFGBR{AA}.dbc (AA = ano com 2 dígitos)
@@ -299,12 +299,12 @@ if (file.exists(sinasc_rds)) {
             cod_mun6 = substr(as.character(CODMUNRES), 1, 6),
             ano = ano,
             raca_cor_mae = case_when(
-              RACACORMAE == "Branca" ~ "Branca",
-              RACACORMAE == "Preta" ~ "Preta",
-              RACACORMAE == "Parda" ~ "Parda",
-              RACACORMAE == "Amarela" ~ "Amarela",
-              RACACORMAE == "Indígena" ~ "Indígena",
-              TRUE ~ "Ignorado"
+              RACACORMAE == "White" ~ "White",
+              RACACORMAE == "Black" ~ "Black",
+              RACACORMAE == "Mixed-race" ~ "Mixed-race",
+              RACACORMAE == "Asian" ~ "Asian",
+              RACACORMAE == "Indigenous" ~ "Indigenous",
+              TRUE ~ "Unknown"
             )
           ) %>%
           count(ano, cod_mun6, raca_cor_mae, name = "nv")
@@ -382,7 +382,7 @@ message("  Malhas carregadas: ",
 message("\n====== PARTE 2: Limpeza e preparação ======")
 
 # -------------------------------------------------------------------------
-# 2.1 Limpeza — Sífilis Gestacional (SIFG)
+# 2.1 Limpeza — Sífilis Gestational (SIFG)
 # -------------------------------------------------------------------------
 limpar_sifg <- function(df) {
   if (nrow(df) == 0) { warning("DataFrame SIFG vazio."); return(df) }
@@ -417,9 +417,9 @@ limpar_sifg <- function(df) {
 
   # Raça/cor
   if ("cs_raca" %in% nms) {
-    df$raca_cor <- recode(df$cs_raca, !!!RACA_COR_LABELS, .default = "Ignorado")
+    df$raca_cor <- recode(df$cs_raca, !!!RACA_COR_LABELS, .default = "Unknown")
   } else {
-    df$raca_cor <- "Ignorado"
+    df$raca_cor <- "Unknown"
   }
 
   # Escolaridade
@@ -431,7 +431,7 @@ limpar_sifg <- function(df) {
   # Esquema de tratamento
   if ("tpesquema" %in% nms) df$esquema_trat <- df$tpesquema
 
-  df$tipo_sifilis <- "Gestacional"
+  df$tipo_sifilis <- "Gestational"
   df <- df %>% filter(ano_notif %in% ANOS_ESTUDO)
 
   # Qualidade dos dados
@@ -444,7 +444,7 @@ limpar_sifg <- function(df) {
 }
 
 # -------------------------------------------------------------------------
-# 2.2 Limpeza — Sífilis Congênita (SIFC)
+# 2.2 Limpeza — Sífilis Congenital (SIFC)
 # -------------------------------------------------------------------------
 limpar_sifc <- function(df) {
   if (nrow(df) == 0) { warning("DataFrame SIFC vazio."); return(df) }
@@ -478,11 +478,11 @@ limpar_sifc <- function(df) {
 
   # Raça/cor — usar da mãe (ant_raca) se disponível, senão cs_raca (da criança)
   if ("ant_raca" %in% nms) {
-    df$raca_cor <- recode(df$ant_raca, !!!RACA_COR_LABELS, .default = "Ignorado")
+    df$raca_cor <- recode(df$ant_raca, !!!RACA_COR_LABELS, .default = "Unknown")
   } else if ("cs_raca" %in% nms) {
-    df$raca_cor <- recode(df$cs_raca, !!!RACA_COR_LABELS, .default = "Ignorado")
+    df$raca_cor <- recode(df$cs_raca, !!!RACA_COR_LABELS, .default = "Unknown")
   } else {
-    df$raca_cor <- "Ignorado"
+    df$raca_cor <- "Unknown"
   }
 
   # Pré-natal da mãe
@@ -494,7 +494,7 @@ limpar_sifc <- function(df) {
   # Evolução do caso
   if ("evolucao" %in% nms) df$evolucao_caso <- df$evolucao
 
-  df$tipo_sifilis <- "Congênita"
+  df$tipo_sifilis <- "Congenital"
   df <- df %>% filter(ano_notif %in% ANOS_ESTUDO)
 
   for (v in c("ano_notif", "cod_mun_notif", "cod_uf", "raca_cor")) {
@@ -537,16 +537,16 @@ agregar_casos <- function(df, ..., tipo_label) {
 
 # Brasil
 casos_br_sifg <- df_sifg %>% count(ano_notif, name = "n_casos") %>%
-  mutate(tipo_sifilis = "Gestacional")
+  mutate(tipo_sifilis = "Gestational")
 casos_br_sifc <- df_sifc %>% count(ano_notif, name = "n_casos") %>%
-  mutate(tipo_sifilis = "Congênita")
+  mutate(tipo_sifilis = "Congenital")
 casos_br <- bind_rows(casos_br_sifg, casos_br_sifc)
 
 # Por UF
 casos_uf_sifg <- df_sifg %>% count(ano_notif, cod_uf, name = "n_casos") %>%
-  mutate(tipo_sifilis = "Gestacional")
+  mutate(tipo_sifilis = "Gestational")
 casos_uf_sifc <- df_sifc %>% count(ano_notif, cod_uf, name = "n_casos") %>%
-  mutate(tipo_sifilis = "Congênita")
+  mutate(tipo_sifilis = "Congenital")
 casos_uf <- bind_rows(casos_uf_sifg, casos_uf_sifc) %>%
   mutate(macrorregiao = get_macrorregiao(cod_uf),
          sigla_uf = UF_SIGLA[cod_uf])
@@ -559,18 +559,18 @@ casos_regiao <- casos_uf %>%
 # Por município
 casos_mun_sifg <- df_sifg %>%
   count(ano_notif, cod_mun_notif, cod_uf, name = "n_casos") %>%
-  mutate(tipo_sifilis = "Gestacional")
+  mutate(tipo_sifilis = "Gestational")
 casos_mun_sifc <- df_sifc %>%
   count(ano_notif, cod_mun_notif, cod_uf, name = "n_casos") %>%
-  mutate(tipo_sifilis = "Congênita")
+  mutate(tipo_sifilis = "Congenital")
 casos_mun <- bind_rows(casos_mun_sifg, casos_mun_sifc) %>%
   mutate(macrorregiao = get_macrorregiao(cod_uf))
 
 # Por raça/cor (Brasil)
 casos_raca_sifg <- df_sifg %>% count(ano_notif, raca_cor, name = "n_casos") %>%
-  mutate(tipo_sifilis = "Gestacional")
+  mutate(tipo_sifilis = "Gestational")
 casos_raca_sifc <- df_sifc %>% count(ano_notif, raca_cor, name = "n_casos") %>%
-  mutate(tipo_sifilis = "Congênita")
+  mutate(tipo_sifilis = "Congenital")
 casos_raca <- bind_rows(casos_raca_sifg, casos_raca_sifc)
 
 # -------------------------------------------------------------------------
@@ -653,7 +653,7 @@ razao_mun <- indicadores_mun %>%
   select(ano_notif, cod_mun_notif, tipo_sifilis, n_casos) %>%
   pivot_wider(names_from = tipo_sifilis, values_from = n_casos, values_fill = 0) %>%
   mutate(
-    razao_sc_sg = ifelse(Gestacional > 0, Congênita / Gestacional, NA_real_)
+    razao_sc_sg = ifelse(Gestational > 0, Congenital / Gestational, NA_real_)
   )
 
 # Indicadores por UF — usar nv_uf_ano (dados agregados por UF)
@@ -671,7 +671,7 @@ indicadores_br <- casos_br %>%
   rename(nv = nv_total) %>%
   mutate(taxa_1000nv = ifelse(!is.na(nv) & nv > 0, (n_casos / nv) * 1000, NA_real_))
 
-message("  Indicadores calculados.")
+message("  Indicators calculated.")
 
 # Salvar indicadores
 saveRDS(indicadores_mun, file.path(data_proc, "indicadores_municipio.rds"))
@@ -701,8 +701,8 @@ tabela1_brasil <- indicadores_br %>%
     razao_mun %>%
       group_by(ano_notif) %>%
       summarise(
-        total_sg = sum(Gestacional, na.rm = TRUE),
-        total_sc = sum(Congênita, na.rm = TRUE),
+        total_sg = sum(Gestational, na.rm = TRUE),
+        total_sc = sum(Congenital, na.rm = TRUE),
         .groups = "drop"
       ) %>%
       mutate(razao_sc_sg = total_sc / total_sg),
@@ -711,7 +711,7 @@ tabela1_brasil <- indicadores_br %>%
 
 # Exportar Tabela 1
 writexl::write_xlsx(tabela1_brasil, file.path(out_tables, "Tabela1_Brasil_anual.xlsx"))
-message("  Tabela 1 exportada.")
+message("  Table 1 exported.")
 
 # -------------------------------------------------------------------------
 # 4.2 Tabela 2: Indicadores por macrorregião
@@ -740,103 +740,88 @@ writexl::write_xlsx(tabela_raca, file.path(out_tables, "Tabela_Raca_Cor_anual.xl
 # -------------------------------------------------------------------------
 # 4.5 Figura 1: Tendência temporal — Brasil
 # -------------------------------------------------------------------------
-# Fig 1a: Casos absolutos (sempre disponível)
-fig1a <- casos_br %>%
-  ggplot(aes(x = ano_notif, y = n_casos, color = tipo_sifilis)) +
+# Fig 1 (MAIN): Rates per 1,000 live births — Brasil
+fig1 <- indicadores_br %>%
+  filter(!is.na(taxa_1000nv)) %>%
+  ggplot(aes(x = ano_notif, y = taxa_1000nv, color = tipo_sifilis)) +
   geom_line(linewidth = 1.2) +
   geom_point(size = 2.5) +
-  # Marcar crise penicilina (2014-2016) e COVID (2020)
-  annotate("rect", xmin = 2014, xmax = 2016, ymin = -Inf, ymax = Inf,
-           alpha = 0.08, fill = "orange") +
-  annotate("rect", xmin = 2020, xmax = 2021, ymin = -Inf, ymax = Inf,
-           alpha = 0.08, fill = "red") +
-  annotate("text", x = 2015, y = Inf, vjust = 1.5,
-           label = "Crise penicilina", size = 2.5, color = "orange4") +
-  annotate("text", x = 2020.5, y = Inf, vjust = 1.5,
-           label = "COVID-19", size = 2.5, color = "red4") +
   scale_color_manual(
-    values = c("Gestacional" = "#D95F02", "Congênita" = "#7570B3"),
+    values = c("Gestational" = "#D95F02", "Congenital" = "#7570B3"),
     name = ""
   ) +
   scale_x_continuous(breaks = ANOS_ESTUDO) +
-  scale_y_continuous(labels = scales::comma) +
-  labs(x = "Ano de notificação", y = "Número de casos") +
+  labs(x = "Year", y = "Rate per 1,000 live births") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave(file.path(out_figs, "Fig1_Tendencia_Brasil_Casos.png"), fig1a,
+ggsave(file.path(out_figs, "Fig1_Trend_Brazil_Rate.png"), fig1,
        width = 10, height = 6, dpi = 300)
-ggsave(file.path(out_figs, "Fig1_Tendencia_Brasil_Casos.pdf"), fig1a,
+ggsave(file.path(out_figs, "Fig1_Trend_Brazil_Rate.pdf"), fig1,
        width = 10, height = 6)
 
-# Fig 1b: Taxas por 1.000 NV (se disponível)
-if (any(!is.na(indicadores_br$taxa_1000nv))) {
-  fig1b <- indicadores_br %>%
-    filter(!is.na(taxa_1000nv)) %>%
-    ggplot(aes(x = ano_notif, y = taxa_1000nv, color = tipo_sifilis)) +
-    geom_line(linewidth = 1.2) +
-    geom_point(size = 2.5) +
-    annotate("rect", xmin = 2014, xmax = 2016, ymin = -Inf, ymax = Inf,
-             alpha = 0.08, fill = "orange") +
-    annotate("rect", xmin = 2020, xmax = 2021, ymin = -Inf, ymax = Inf,
-             alpha = 0.08, fill = "red") +
-    scale_color_manual(
-      values = c("Gestacional" = "#D95F02", "Congênita" = "#7570B3"),
-      name = ""
-    ) +
-    scale_x_continuous(breaks = ANOS_ESTUDO) +
-    labs(x = "Ano de notificação", y = "Taxa por 1.000 nascidos vivos") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Supplementary: absolute cases
+fig1_supl <- casos_br %>%
+  ggplot(aes(x = ano_notif, y = n_casos, color = tipo_sifilis)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2.5) +
+  scale_color_manual(values = c("Gestational" = "#D95F02", "Congenital" = "#7570B3"), name = "") +
+  scale_x_continuous(breaks = ANOS_ESTUDO) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "Year of notification", y = "Number of cases") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-  ggsave(file.path(out_figs, "Fig1_Tendencia_Brasil_Taxa.png"), fig1b,
-         width = 10, height = 6, dpi = 300)
-  ggsave(file.path(out_figs, "Fig1_Tendencia_Brasil_Taxa.pdf"), fig1b,
-         width = 10, height = 6)
-}
-message("  Figura 1 salva.")
+ggsave(file.path(out_suppl, "FigS1_Trend_Brazil_Cases.png"), fig1_supl,
+       width = 10, height = 6, dpi = 300)
+
+message("  Figure 1 saved.")
 
 # -------------------------------------------------------------------------
-# 4.6 Figura 2: Tendência por macrorregião
+# 4.6 Figure 2: Trends by macro-region (RATES)
 # -------------------------------------------------------------------------
-fig2 <- casos_regiao %>%
-  ggplot(aes(x = ano_notif, y = n_casos, color = macrorregiao)) +
+# Calculate rates by region using NV by UF aggregated to region
+indicadores_regiao <- indicadores_uf %>%
+  filter(!is.na(nv), nv > 0) %>%
+  group_by(ano_notif, macrorregiao, tipo_sifilis) %>%
+  summarise(n_casos = sum(n_casos), nv = sum(nv), .groups = "drop") %>%
+  mutate(taxa_1000nv = (n_casos / nv) * 1000)
+
+fig2 <- indicadores_regiao %>%
+  ggplot(aes(x = ano_notif, y = taxa_1000nv, color = macrorregiao)) +
   geom_line(linewidth = 0.9) +
   geom_point(size = 1.8) +
   facet_wrap(~tipo_sifilis, scales = "free_y") +
-  scale_color_manual(values = cores_regiao, name = "Região") +
+  scale_color_manual(values = cores_regiao, name = "Region") +
   scale_x_continuous(breaks = ANOS_ESTUDO) +
-  labs(
-    title = "Casos de sífilis por macrorregião",
-    subtitle = glue("{ANO_INICIO}–{ANO_FIM}"),
-    x = "Ano", y = "Número de casos",
-    caption = "Fonte: SINAN/DataSUS"
-  ) +
+  labs(x = "Year", y = "Rate per 1,000 live births") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave(file.path(out_figs, "Fig2_Tendencia_Regiao.png"), fig2,
+ggsave(file.path(out_figs, "Fig2_Trend_Region_Rate.png"), fig2,
        width = 12, height = 6, dpi = 300)
-message("  Figura 2 salva.")
+ggsave(file.path(out_figs, "Fig2_Trend_Region_Rate.pdf"), fig2,
+       width = 12, height = 6)
+message("  Figure 2 saved.")
 
 # -------------------------------------------------------------------------
 # 4.7 Figura 3: Distribuição por raça/cor
 # -------------------------------------------------------------------------
 fig3 <- casos_raca %>%
-  filter(raca_cor != "Ignorado") %>%
+  filter(raca_cor != "Unknown") %>%
   ggplot(aes(x = ano_notif, y = n_casos, fill = raca_cor)) +
   geom_area(position = "fill", alpha = 0.85) +
   facet_wrap(~tipo_sifilis) +
-  scale_fill_manual(values = cores_raca, name = "Raça/Cor") +
+  scale_fill_manual(values = cores_raca, name = "Race/Colour") +
   scale_x_continuous(breaks = ANOS_ESTUDO) +
   scale_y_continuous(labels = scales::percent) +
   labs(
     title = "Distribuição proporcional por raça/cor",
     subtitle = "Sífilis gestacional e congênita — Brasil",
-    x = "Ano", y = "Proporção",
+    x = "Year", y = "Proportion",
     caption = "Fonte: SINAN/DataSUS. Excluídos registros com raça/cor ignorada."
   )
 
 ggsave(file.path(out_figs, "Fig3_Raca_Cor.png"), fig3,
        width = 12, height = 6, dpi = 300)
-message("  Figura 3 salva.")
+message("  Figure 3 saved.")
 
 
 ###############################################################################
@@ -1007,7 +992,7 @@ realizar_joinpoint <- function(dados, var_y, var_x = "ano_notif",
 # -------------------------------------------------------------------------
 jp_brasil <- list()
 
-for (tipo in c("Gestacional", "Congênita")) {
+for (tipo in c("Gestational", "Congenital")) {
   dados_tipo <- indicadores_br %>% filter(tipo_sifilis == tipo)
 
   # Taxa
@@ -1033,7 +1018,7 @@ message("  Joinpoint Brasil: ", nrow(jp_brasil_tabela), " segmentos identificado
 jp_regiao <- list()
 
 for (reg in unique(casos_regiao$macrorregiao)) {
-  for (tipo in c("Gestacional", "Congênita")) {
+  for (tipo in c("Gestational", "Congenital")) {
     dados <- casos_regiao %>% filter(macrorregiao == reg, tipo_sifilis == tipo)
     jp <- realizar_joinpoint(dados, "n_casos",
                               label = paste0(reg, " — ", tipo))
@@ -1049,7 +1034,7 @@ jp_regiao_tabela <- bind_rows(jp_regiao)
 jp_uf <- list()
 
 for (uf in unique(casos_uf$cod_uf)) {
-  for (tipo in c("Gestacional", "Congênita")) {
+  for (tipo in c("Gestational", "Congenital")) {
     dados <- casos_uf %>% filter(cod_uf == uf, tipo_sifilis == tipo)
     if (nrow(dados) >= 6) {
       jp <- realizar_joinpoint(dados, "n_casos",
@@ -1077,7 +1062,7 @@ message("  Tabela Joinpoint completa exportada.")
 fig_jp_brasil <- function() {
   plots <- list()
 
-  for (tipo in c("Gestacional", "Congênita")) {
+  for (tipo in c("Gestational", "Congenital")) {
     chave <- paste0(tipo, "_casos")
     if (!chave %in% names(jp_brasil)) next
 
@@ -1093,14 +1078,14 @@ fig_jp_brasil <- function() {
 
     p <- ggplot() +
       geom_point(data = dados, aes(x = ano_notif, y = n_casos),
-                 size = 3, color = ifelse(tipo == "Gestacional", "#D95F02", "#7570B3")) +
+                 size = 3, color = ifelse(tipo == "Gestational", "#D95F02", "#7570B3")) +
       geom_line(data = df_pred, aes(x = ano, y = pred),
                 linewidth = 1, color = "black", linetype = "solid") +
       # Marcar joinpoints
       {if (any(!is.na(jp$joinpoint)))
         geom_vline(xintercept = na.omit(jp$joinpoint),
                    linetype = "dashed", color = "red", linewidth = 0.7)} +
-      labs(x = "Ano", y = "Número de casos") +
+      labs(x = "Year", y = "Number of cases") +
       # Anotar APC por segmento
       annotate("text", x = jp$ano_inicio + (jp$ano_fim - jp$ano_inicio) / 2,
                y = max(dados$n_casos) * 0.95,
@@ -1125,7 +1110,7 @@ ggsave(file.path(out_figs, "Fig4_Joinpoint_Brasil.png"), fig_jp,
        width = 14, height = 6, dpi = 300)
 ggsave(file.path(out_figs, "Fig4_Joinpoint_Brasil.pdf"), fig_jp,
        width = 14, height = 6)
-message("  Figura Joinpoint salva.")
+message("  Figure Joinpoint saved.")
 
 
 ###############################################################################
@@ -1215,7 +1200,7 @@ realizar_poisson <- function(dados, label = "") {
 # Aplicar análises de sensibilidade — Brasil
 sensib_resultados <- list()
 
-for (tipo in c("Gestacional", "Congênita")) {
+for (tipo in c("Gestational", "Congenital")) {
   dados <- indicadores_br %>% filter(tipo_sifilis == tipo)
 
   # Prais-Winsten
@@ -1242,7 +1227,7 @@ writexl::write_xlsx(sensib_tabela, file.path(out_tables, "Tabela_Sensibilidade_T
 ANOS_SENSIB <- 2012:2023
 
 jp_sensib <- list()
-for (tipo in c("Gestacional", "Congênita")) {
+for (tipo in c("Gestational", "Congenital")) {
   dados_tipo <- indicadores_br %>%
     filter(tipo_sifilis == tipo, ano_notif %in% ANOS_SENSIB)
 
@@ -1293,7 +1278,7 @@ dados_espaciais <- list()
 for (per_nome in names(periodos)) {
   anos_per <- periodos[[per_nome]]
 
-  for (tipo in c("Gestacional", "Congênita")) {
+  for (tipo in c("Gestational", "Congenital")) {
     casos_per <- casos_mun %>%
       filter(ano_notif %in% anos_per, tipo_sifilis == tipo) %>%
       group_by(cod_mun_notif) %>%
@@ -1359,7 +1344,7 @@ suavizar_bayes_empirico <- function(casos, populacao) {
 df_espacial$taxa_suavizada <- NA_real_
 
 # Aplicar suavização para o período total
-for (tipo in c("Gestacional", "Congênita")) {
+for (tipo in c("Gestational", "Congenital")) {
   idx <- df_espacial$periodo == "Total" & df_espacial$tipo_sifilis == tipo
   df_sub <- df_espacial[idx, ]
 
@@ -1389,7 +1374,7 @@ message("  Construindo matriz de vizinhança...")
 
 # Filtrar municípios com dados válidos para sífilis gestacional
 mapa_sg <- mapa_dados %>%
-  filter(tipo_sifilis == "Gestacional", !is.na(taxa_suavizada))
+  filter(tipo_sifilis == "Gestational", !is.na(taxa_suavizada))
 
 if (nrow(mapa_sg) > 0) {
   # Vizinhança Queen
@@ -1419,23 +1404,23 @@ if (nrow(mapa_sg) > 0) {
   moran_sg <- moran.test(mapa_sg$taxa_suavizada, listw_queen,
                           zero.policy = TRUE, alternative = "two.sided")
 
-  message("  Moran I (Sífilis Gestacional): ", round(moran_sg$estimate[1], 4),
+  message("  Moran I (Sífilis Gestational): ", round(moran_sg$estimate[1], 4),
           " | p = ", format.pval(moran_sg$p.value, digits = 3))
 
   # Moran para sífilis congênita
   mapa_sc <- mapa_dados %>%
-    filter(tipo_sifilis == "Congênita", !is.na(taxa_suavizada))
+    filter(tipo_sifilis == "Congenital", !is.na(taxa_suavizada))
 
   if (nrow(mapa_sc) == nrow(mapa_sg)) {
     moran_sc <- moran.test(mapa_sc$taxa_suavizada, listw_queen,
                             zero.policy = TRUE, alternative = "two.sided")
-    message("  Moran I (Sífilis Congênita): ", round(moran_sc$estimate[1], 4),
+    message("  Moran I (Sífilis Congenital): ", round(moran_sc$estimate[1], 4),
             " | p = ", format.pval(moran_sc$p.value, digits = 3))
   }
 
   # Salvar resultados Moran
   moran_resultados <- tibble(
-    indicador = c("Sífilis Gestacional", "Sífilis Congênita"),
+    indicador = c("Sífilis Gestational", "Sífilis Congenital"),
     Moran_I = c(moran_sg$estimate[1],
                 ifelse(exists("moran_sc"), moran_sc$estimate[1], NA)),
     Expected_I = c(moran_sg$estimate[2],
@@ -1474,12 +1459,12 @@ if (nrow(mapa_sg) > 0) {
   mapa_sg <- mapa_sg %>%
     mutate(
       cluster_lisa = case_when(
-        lisa_p > 0.05 ~ "Não significativo",
+        lisa_p > 0.05 ~ "Not significant",
         taxa_suavizada >= media_global & lag_taxa >= media_global ~ "High-High",
         taxa_suavizada < media_global & lag_taxa < media_global ~ "Low-Low",
         taxa_suavizada >= media_global & lag_taxa < media_global ~ "High-Low",
         taxa_suavizada < media_global & lag_taxa >= media_global ~ "Low-High",
-        TRUE ~ "Não significativo"
+        TRUE ~ "Not significant"
       )
     )
 
@@ -1501,12 +1486,12 @@ if (nrow(mapa_sg) > 0) {
     mapa_sc <- mapa_sc %>%
       mutate(
         cluster_lisa = case_when(
-          lisa_p > 0.05 ~ "Não significativo",
+          lisa_p > 0.05 ~ "Not significant",
           taxa_suavizada >= media_global_sc & lag_taxa >= media_global_sc ~ "High-High",
           taxa_suavizada < media_global_sc & lag_taxa < media_global_sc ~ "Low-Low",
           taxa_suavizada >= media_global_sc & lag_taxa < media_global_sc ~ "High-Low",
           taxa_suavizada < media_global_sc & lag_taxa >= media_global_sc ~ "Low-High",
-          TRUE ~ "Não significativo"
+          TRUE ~ "Not significant"
         )
       )
 
@@ -1519,12 +1504,12 @@ if (nrow(mapa_sg) > 0) {
   # -----------------------------------------------------------------------
   message("  Gerando mapas...")
 
-  # Mapa de taxa suavizada — Sífilis Gestacional
+  # Mapa de taxa suavizada — Sífilis Gestational
   mapa_taxa_sg <- ggplot(mapa_sg) +
     geom_sf(aes(fill = taxa_suavizada), color = NA) +
     geom_sf(data = mapa_uf, fill = NA, color = "grey30", linewidth = 0.3) +
     scale_fill_viridis_c(option = "inferno", direction = -1,
-                          name = "Taxa/1.000 NV\n(Bayes empírico)",
+                          name = "Rate/1,000 LB\n(Empirical Bayes)",
                           na.value = "grey90") +
     theme_void() +
     theme(legend.position = c(0.15, 0.3))
@@ -1540,7 +1525,7 @@ if (nrow(mapa_sg) > 0) {
     "Low-Low"   = "#2C7BB6",
     "High-Low"  = "#FDAE61",
     "Low-High"  = "#ABD9E9",
-    "Não significativo" = "#F0F0F0"
+    "Not significant" = "#F0F0F0"
   )
 
   mapa_lisa_sg <- ggplot(mapa_sg) +
@@ -1553,7 +1538,7 @@ if (nrow(mapa_sg) > 0) {
   ggsave(file.path(out_maps, "Mapa_LISA_SG.png"), mapa_lisa_sg,
          width = 10, height = 12, dpi = 300)
 
-  # Mapa LISA — Sífilis Congênita
+  # Mapa LISA — Sífilis Congenital
   if (exists("mapa_sc") && "cluster_lisa" %in% names(mapa_sc)) {
     mapa_lisa_sc <- ggplot(mapa_sc) +
       geom_sf(aes(fill = cluster_lisa), color = NA) +
@@ -1566,7 +1551,7 @@ if (nrow(mapa_sg) > 0) {
            width = 10, height = 12, dpi = 300)
   }
 
-  message("  Mapas exportados.")
+  message("  Maps exported.")
 
 } else {
   message("  AVISO: Dados espaciais insuficientes para análise.")
@@ -1653,17 +1638,17 @@ if (file.exists(ivs_file)) {
 ivs <- ivs %>%
   mutate(
     ivs_cat = case_when(
-      ivs_geral <= 0.20 ~ "Muito baixa",
-      ivs_geral <= 0.40 ~ "Baixa",
-      ivs_geral <= 0.60 ~ "Média",
-      ivs_geral <= 0.80 ~ "Alta",
-      ivs_geral > 0.80  ~ "Muito alta",
+      ivs_geral <= 0.20 ~ "Very low",
+      ivs_geral <= 0.40 ~ "Low",
+      ivs_geral <= 0.60 ~ "Medium",
+      ivs_geral <= 0.80 ~ "High",
+      ivs_geral > 0.80  ~ "Very high",
       TRUE ~ NA_character_
     ),
-    ivs_cat = factor(ivs_cat, levels = c("Muito baixa", "Baixa", "Média",
-                                          "Alta", "Muito alta")),
-    ivs_cat = factor(ivs_cat, levels = c("Muito baixa", "Baixa", "Média",
-                                          "Alta", "Muito alta")),
+    ivs_cat = factor(ivs_cat, levels = c("Very low", "Low", "Medium",
+                                          "High", "Very high")),
+    ivs_cat = factor(ivs_cat, levels = c("Very low", "Low", "Medium",
+                                          "High", "Very high")),
     ivs_quintil = ntile(ivs_geral, 5)
   )
 
@@ -1707,7 +1692,7 @@ writexl::write_xlsx(tabela_ivs, file.path(out_tables, "Tabela_IVS_estratos.xlsx"
 # monotônica entre IVS e taxa de sífilis
 
 gradiente_social <- dados_ivs %>%
-  filter(!is.na(ivs_quintil), tipo_sifilis == "Gestacional") %>%
+  filter(!is.na(ivs_quintil), tipo_sifilis == "Gestational") %>%
   group_by(ivs_quintil) %>%
   summarise(
     taxa_media = mean(taxa_bruta, na.rm = TRUE),
@@ -1717,8 +1702,8 @@ gradiente_social <- dados_ivs %>%
 # Teste de correlação de Spearman como proxy
 if (nrow(dados_ivs %>% filter(!is.na(ivs_geral), !is.na(taxa_bruta))) > 10) {
   cor_ivs_sg <- cor.test(
-    dados_ivs %>% filter(tipo_sifilis == "Gestacional") %>% pull(ivs_geral),
-    dados_ivs %>% filter(tipo_sifilis == "Gestacional") %>% pull(taxa_bruta),
+    dados_ivs %>% filter(tipo_sifilis == "Gestational") %>% pull(ivs_geral),
+    dados_ivs %>% filter(tipo_sifilis == "Gestational") %>% pull(taxa_bruta),
     method = "spearman", exact = FALSE
   )
   message("  Correlação IVS × SG (Spearman): rho = ", round(cor_ivs_sg$estimate, 3),
@@ -1739,14 +1724,14 @@ fig_ivs <- dados_ivs %>%
   labs(
     title = "Taxas de sífilis por nível de vulnerabilidade social (IVS)",
     subtitle = glue("Municípios brasileiros, {ANO_INICIO}–{ANO_FIM}"),
-    x = "Categoria IVS", y = "Taxa/1.000 NV (escala log)",
+    x = "IVS category", y = "Rate/1,000 LB (log scale)",
     caption = "Fonte: SINAN/DataSUS + IVS/IPEA"
   ) +
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
 ggsave(file.path(out_figs, "Fig5_IVS_Boxplot.png"), fig_ivs,
        width = 12, height = 7, dpi = 300)
-message("  Figura IVS salva.")
+message("  Figure IVS saved.")
 
 # -------------------------------------------------------------------------
 # 8.6 Moran Bivariado: IVS × Sífilis
@@ -1816,7 +1801,7 @@ if (!is.null(nv_mun_raca)) {
 
 # Tabela descritiva por raça/cor
 tabela_raca_descritiva <- casos_raca %>%
-  filter(raca_cor %in% c("Branca", "Preta", "Parda")) %>%
+  filter(raca_cor %in% c("White", "Black", "Mixed-race")) %>%
   {
     if (!is.null(nv_raca)) {
       left_join(., nv_raca, by = c("ano_notif" = "ano", "raca_cor")) %>%
@@ -1835,16 +1820,16 @@ razoes_raciais <- tabela_raca_descritiva %>%
               values_from = c(n_casos, taxa_1000nv)) %>%
   mutate(
     # Diferença absoluta (excesso de casos)
-    diff_abs_preta = n_casos_Preta - n_casos_Branca,
-    diff_abs_parda = n_casos_Parda - n_casos_Branca,
+    diff_abs_black = n_casos_Black - n_casos_White,
+    diff_abs_mixed = `n_casos_Mixed-race` - n_casos_White,
 
     # Razão de taxas
-    razao_preta_branca = taxa_1000nv_Preta / taxa_1000nv_Branca,
-    razao_parda_branca = taxa_1000nv_Parda / taxa_1000nv_Branca,
+    ratio_black_white = taxa_1000nv_Black / taxa_1000nv_White,
+    ratio_mixed_white = `taxa_1000nv_Mixed-race` / taxa_1000nv_White,
 
     # Diferença de taxas
-    diff_taxa_preta = taxa_1000nv_Preta - taxa_1000nv_Branca,
-    diff_taxa_parda = taxa_1000nv_Parda - taxa_1000nv_Branca
+    diff_rate_black = taxa_1000nv_Black - taxa_1000nv_White,
+    diff_rate_mixed = `taxa_1000nv_Mixed-race` - taxa_1000nv_White
   )
 
 writexl::write_xlsx(razoes_raciais,
@@ -1858,12 +1843,12 @@ fig_raca <- tabela_raca_descritiva %>%
   geom_line(linewidth = 1) +
   geom_point(size = 2) +
   facet_wrap(~tipo_sifilis, scales = "free_y") +
-  scale_color_manual(values = cores_raca, name = "Raça/Cor") +
+  scale_color_manual(values = cores_raca, name = "Race/Colour") +
   scale_x_continuous(breaks = ANOS_ESTUDO) +
   labs(
     title = "Sífilis por raça/cor materna — Brasil",
     subtitle = glue("{ANO_INICIO}–{ANO_FIM}"),
-    x = "Ano", y = "Número de casos",
+    x = "Year", y = "Number of cases",
     caption = paste0("Fonte: SINAN/DataSUS. Nota: Raça/cor é variável proxy de ",
                      "exposição a desigualdades estruturais, não categoria biológica.")
   ) +
@@ -1880,7 +1865,7 @@ ggsave(file.path(out_figs, "Fig6_Raca_Cor.png"), fig_raca,
 # Necessita dados individuais com código de município para merge com IVS
 if (nrow(df_sifg) > 0 && "ivs_geral" %in% names(ivs)) {
   df_sifg_ivs <- df_sifg %>%
-    filter(raca_cor %in% c("Branca", "Preta", "Parda")) %>%
+    filter(raca_cor %in% c("White", "Black", "Mixed-race")) %>%
     left_join(
       ivs %>% select(code_muni6, ivs_geral, ivs_cat),
       by = c("cod_mun_notif" = "code_muni6")
@@ -1898,11 +1883,11 @@ if (nrow(df_sifg) > 0 && "ivs_geral" %in% names(ivs)) {
   fig_raca_ivs <- tabela_raca_ivs %>%
     ggplot(aes(x = ivs_cat, y = prop, fill = raca_cor)) +
     geom_col(position = "fill") +
-    scale_fill_manual(values = cores_raca, name = "Raça/Cor") +
+    scale_fill_manual(values = cores_raca, name = "Race/Colour") +
     scale_y_continuous(labels = scales::percent) +
     labs(
       title = "Distribuição racial dos casos de sífilis gestacional por nível de IVS",
-      x = "Vulnerabilidade Social (IVS)", y = "Proporção",
+      x = "Social Vulnerability (IVS)", y = "Proportion",
       caption = "Fonte: SINAN/DataSUS + IVS/IPEA"
     )
 
@@ -1924,7 +1909,7 @@ message("\n====== PARTE 10: Modelagem multivariada ======")
 # 10.1 Preparar dataset de modelagem (nível municipal, período agregado)
 # -------------------------------------------------------------------------
 df_modelo <- df_espacial %>%
-  filter(periodo == "Total", tipo_sifilis == "Gestacional") %>%
+  filter(periodo == "Total", tipo_sifilis == "Gestational") %>%
   left_join(
     ivs %>% select(code_muni6, ivs_geral, ivs_infraestrutura,
                     ivs_capital_humano, ivs_renda_trabalho, ivs_quintil),
@@ -1994,7 +1979,7 @@ if (disp_ratio > 1.5) {
 
 # Dados em painel (município × ano) para modelo multinível
 df_painel <- casos_mun %>%
-  filter(tipo_sifilis == "Gestacional") %>%
+  filter(tipo_sifilis == "Gestational") %>%
   left_join(nv_mun_ano, by = c("cod_mun_notif" = "cod_mun6", "ano_notif" = "ano")) %>%
   left_join(
     ivs %>% select(code_muni6, ivs_geral),
@@ -2131,9 +2116,9 @@ dicionario <- tibble(
     "ivs_cat", "ivs_quintil", "cluster_lisa", "razao_sc_sg"
   ),
   Descricao = c(
-    "Ano de notificação", "Código IBGE do município (6 dígitos)",
+    "Year of notification", "Código IBGE do município (6 dígitos)",
     "Código da UF (2 dígitos)", "Macrorregião do Brasil",
-    "Raça/cor (autorreferida/mãe)", "Tipo: Gestacional ou Congênita",
+    "Raça/cor (autorreferida/mãe)", "Tipo: Gestational ou Congenital",
     "Número de casos notificados", "Nascidos vivos (denominador)",
     "Taxa por 1.000 nascidos vivos (bruta)",
     "Taxa suavizada por Bayes empírico (/1.000 NV)",
@@ -2200,14 +2185,14 @@ fig_uf_panel <- casos_uf %>%
   geom_point(size = 0.8) +
   facet_wrap(~sigla_uf, scales = "free_y", ncol = 5) +
   scale_color_manual(
-    values = c("Gestacional" = "#D95F02", "Congênita" = "#7570B3"),
-    name = "Tipo"
+    values = c("Gestational" = "#D95F02", "Congenital" = "#7570B3"),
+    name = "Type"
   ) +
   scale_x_continuous(breaks = ANOS_ESTUDO) +
   labs(
     title = "Tendência temporal por Unidade da Federação",
     subtitle = glue("Sífilis gestacional e congênita, {ANO_INICIO}–{ANO_FIM}"),
-    x = "Ano", y = "Casos",
+    x = "Year", y = "Cases",
     caption = "Fonte: SINAN/DataSUS"
   ) +
   theme(
@@ -2314,7 +2299,7 @@ fluxograma_texto <- c(
   "====================",
   "",
   "1. FONTES DE DADOS",
-  "   ├── SINAN (Sífilis Gestacional: SIFG, Sífilis Congênita: SIFC)",
+  "   ├── SINAN (Sífilis Gestational: SIFG, Sífilis Congenital: SIFC)",
   "   ├── SINASC (Nascidos Vivos — denominador)",
   "   ├── IBGE (Malha cartográfica municipal)",
   "   └── IPEA (Índice de Vulnerabilidade Social — IVS)",
@@ -2453,7 +2438,7 @@ its_covid <- function(dados, var_y, label = "") {
 
 # ITS para Brasil
 its_resultados <- list()
-for (tipo in c("Gestacional", "Congênita")) {
+for (tipo in c("Gestational", "Congenital")) {
   dados <- indicadores_br %>% filter(tipo_sifilis == tipo)
   its <- its_covid(dados, "n_casos", label = paste0("Brasil — ", tipo))
   if (!is.null(its)) its_resultados[[tipo]] <- its
@@ -2465,10 +2450,10 @@ writexl::write_xlsx(its_tabela, file.path(out_tables, "Tabela_ITS_COVID.xlsx"))
 # Figura ITS
 if (length(its_resultados) > 0 && !is.null(attr(its_resultados[[1]], "dados_pred"))) {
   its_fig_data <- bind_rows(
-    attr(its_resultados[["Gestacional"]], "dados_pred") %>%
-      mutate(tipo = "Gestacional"),
-    attr(its_resultados[["Congênita"]], "dados_pred") %>%
-      mutate(tipo = "Congênita")
+    attr(its_resultados[["Gestational"]], "dados_pred") %>%
+      mutate(tipo = "Gestational"),
+    attr(its_resultados[["Congenital"]], "dados_pred") %>%
+      mutate(tipo = "Congenital")
   )
 
   fig_its <- its_fig_data %>%
@@ -2481,7 +2466,7 @@ if (length(its_resultados) > 0 && !is.null(attr(its_resultados[[1]], "dados_pred
                color = "red", linewidth = 0.7) +
     facet_wrap(~tipo, scales = "free_y") +
     scale_x_continuous(breaks = ANOS_ESTUDO) +
-    labs(x = "Ano", y = "Número de casos") +
+    labs(x = "Year", y = "Number of cases") +
     annotate("text", x = 2020.5, y = Inf, label = "COVID-19",
              vjust = 1.5, size = 3, color = "red", fontface = "italic")
 
@@ -2560,7 +2545,7 @@ calcular_sii_ci <- function(dados_ivs_tipo, var_taxa = "taxa_bruta") {
 
 # Calcular SII e CI para cada tipo de sífilis
 desig_indices <- list()
-for (tipo in c("Gestacional", "Congênita")) {
+for (tipo in c("Gestational", "Congenital")) {
   dados_tipo <- dados_ivs %>% filter(tipo_sifilis == tipo)
   if (nrow(dados_tipo) > 50) {
     desig_indices[[tipo]] <- calcular_sii_ci(dados_tipo)
@@ -2602,14 +2587,14 @@ if (length(desig_indices) > 0) {
     geom_point(size = 2.5) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey50") +
     scale_color_manual(
-      values = c("Gestacional" = "#D95F02", "Congênita" = "#7570B3"),
+      values = c("Gestational" = "#D95F02", "Congenital" = "#7570B3"),
       name = ""
     ) +
     scale_x_continuous(labels = scales::percent, limits = c(0, 1)) +
     scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
     labs(
-      x = "Proporção acumulada da população (ordenada por IVS)",
-      y = "Proporção acumulada dos casos"
+      x = "Cumulative proportion of population (ranked by IVS)",
+      y = "Cumulative proportion of cases"
     ) +
     coord_equal()
 
@@ -2632,8 +2617,8 @@ message("  12.3 Razão SC/SG — análise espacial")
 razao_mun_total <- razao_mun %>%
   group_by(cod_mun_notif) %>%
   summarise(
-    total_sg = sum(Gestacional, na.rm = TRUE),
-    total_sc = sum(Congênita, na.rm = TRUE),
+    total_sg = sum(Gestational, na.rm = TRUE),
+    total_sc = sum(Congenital, na.rm = TRUE),
     .groups = "drop"
   ) %>%
   filter(total_sg >= 5) %>%  # Mínimo de 5 casos SG para estabilidade
@@ -2651,7 +2636,7 @@ if (nrow(mapa_razao) > 100) {
     geom_sf(data = mapa_uf, fill = NA, color = "grey30", linewidth = 0.3) +
     scale_fill_viridis_c(
       option = "magma", direction = -1,
-      name = "Razão SC/SG",
+      name = "CS/GS ratio",
       limits = c(0, quantile(mapa_razao$razao_sc_sg, 0.95, na.rm = TRUE)),
       oob = scales::squish
     ) +
@@ -2687,7 +2672,7 @@ if (nrow(mapa_razao) > 100) {
 
 message("  12.4 Comparação espaço-temporal LISA")
 
-lisa_por_periodo <- function(per_nome, anos_per, tipo = "Gestacional") {
+lisa_por_periodo <- function(per_nome, anos_per, tipo = "Gestational") {
   # Agregar dados do período
   casos_per <- casos_mun %>%
     filter(ano_notif %in% anos_per, tipo_sifilis == tipo) %>%
@@ -2745,7 +2730,7 @@ periodos_lisa <- list(
 
 lisa_periodos <- list()
 for (per in names(periodos_lisa)) {
-  result <- lisa_por_periodo(per, periodos_lisa[[per]], "Gestacional")
+  result <- lisa_por_periodo(per, periodos_lisa[[per]], "Gestational")
   if (!is.null(result)) lisa_periodos[[per]] <- result
 }
 
@@ -2780,9 +2765,9 @@ if (length(lisa_periodos) > 0) {
     st_drop_geometry() %>%
     filter(cluster == "HH") %>%
     count(code_muni6, name = "n_periodos_hh") %>%
-    mutate(persistente = ifelse(n_periodos_hh >= 2, "Sim", "Não"))
+    mutate(persistente = ifelse(n_periodos_hh >= 2, "Yes", "No"))
 
-  n_persistentes <- sum(persistencia_hh$persistente == "Sim")
+  n_persistentes <- sum(persistencia_hh$persistente == "Yes")
   message("  Municípios com cluster HH persistente (>=2 períodos): ", n_persistentes)
 
   writexl::write_xlsx(persistencia_hh,
@@ -2799,7 +2784,7 @@ message("  12.5 Evolução temporal dos índices de desigualdade")
 desig_temporal <- list()
 
 for (ano in ANOS_ESTUDO) {
-  for (tipo in c("Gestacional", "Congênita")) {
+  for (tipo in c("Gestational", "Congenital")) {
     # Dados do ano
     casos_ano <- casos_mun %>%
       filter(ano_notif == ano, tipo_sifilis == tipo)
@@ -2844,11 +2829,11 @@ if (length(desig_temporal) > 0) {
                  "razao_Q5_Q1" = "Razão Q5/Q1"
                ))) +
     scale_color_manual(
-      values = c("Gestacional" = "#D95F02", "Congênita" = "#7570B3"),
+      values = c("Gestational" = "#D95F02", "Congenital" = "#7570B3"),
       name = ""
     ) +
     scale_x_continuous(breaks = ANOS_ESTUDO) +
-    labs(x = "Ano", y = "Valor do índice") +
+    labs(x = "Year", y = "Index value") +
     geom_vline(xintercept = 2019.5, linetype = "dotted",
                color = "red", linewidth = 0.5)
 
@@ -2870,7 +2855,7 @@ message("  12.6 Forest plot Joinpoint por UF")
 if (nrow(jp_uf_tabela) > 0) {
   # Usar AAPC (ou APC do segmento mais recente) por UF
   fp_data <- jp_uf_tabela %>%
-    filter(grepl("Gestacional", label)) %>%
+    filter(grepl("Gestational", label)) %>%
     group_by(label) %>%
     # Último segmento = tendência mais recente
     slice_max(ano_fim, n = 1) %>%
@@ -2880,7 +2865,7 @@ if (nrow(jp_uf_tabela) > 0) {
       significativo = ifelse(
         (APC_IC95_lo > 0 & APC_IC95_hi > 0) |
           (APC_IC95_lo < 0 & APC_IC95_hi < 0),
-        "Sim", "Não"
+        "Yes", "No"
       )
     ) %>%
     arrange(APC)
@@ -2892,8 +2877,8 @@ if (nrow(jp_uf_tabela) > 0) {
     geom_errorbarh(aes(xmin = APC_IC95_lo, xmax = APC_IC95_hi),
                    height = 0.3, linewidth = 0.5) +
     geom_point(aes(color = significativo), size = 2.5) +
-    scale_color_manual(values = c("Sim" = "#D73027", "Não" = "#4575B4"),
-                       name = "Estatisticamente\nsignificativo") +
+    scale_color_manual(values = c("Yes" = "#D73027", "No" = "#4575B4"),
+                       name = "Statistically\nsignificant") +
     labs(
       x = "APC (%) — último segmento",
       y = ""
@@ -2914,7 +2899,7 @@ message("  12.7 Modelo interação raça × IVS")
 if (nrow(df_painel) > 100 && "ivs_geral" %in% names(df_painel)) {
   # Adicionar raça/cor ao painel
   df_painel_raca <- df_sifg %>%
-    filter(raca_cor %in% c("Branca", "Preta", "Parda")) %>%
+    filter(raca_cor %in% c("White", "Black", "Mixed-race")) %>%
     count(ano_notif, cod_mun_notif, raca_cor, name = "n_casos") %>%
     left_join(nv_mun_ano, by = c("cod_mun_notif" = "cod_mun6",
                                   "ano_notif" = "ano")) %>%
@@ -2924,9 +2909,9 @@ if (nrow(df_painel) > 100 && "ivs_geral" %in% names(df_painel)) {
     mutate(
       cod_uf = substr(cod_mun_notif, 1, 2),
       log_nv = log(nv),
-      raca_cor = relevel(factor(raca_cor), ref = "Branca"),
+      raca_cor = relevel(factor(raca_cor), ref = "White"),
       ivs_cat3 = cut(ivs_geral, breaks = c(0, 0.3, 0.5, 1),
-                      labels = c("Baixa", "Media", "Alta"))
+                      labels = c("Low", "Media", "High"))
     )
 
   if (nrow(df_painel_raca) > 200) {
@@ -2946,8 +2931,8 @@ if (nrow(df_painel) > 100 && "ivs_geral" %in% names(df_painel)) {
 
     # Predicted rates por combinação raça × IVS
     grid_pred <- expand.grid(
-      raca_cor = factor(c("Branca", "Preta", "Parda"), levels = levels(df_painel_raca$raca_cor)),
-      ivs_cat3 = factor(c("Baixa", "Media", "Alta")),
+      raca_cor = factor(c("White", "Black", "Mixed-race"), levels = levels(df_painel_raca$raca_cor)),
+      ivs_cat3 = factor(c("Low", "Media", "High")),
       log_nv = log(1000)
     )
     grid_pred$pred <- predict(mod_interacao, newdata = grid_pred, type = "response")
@@ -2955,10 +2940,10 @@ if (nrow(df_painel) > 100 && "ivs_geral" %in% names(df_painel)) {
     fig_interacao <- grid_pred %>%
       ggplot(aes(x = ivs_cat3, y = pred, fill = raca_cor)) +
       geom_col(position = position_dodge(width = 0.8), width = 0.7) +
-      scale_fill_manual(values = cores_raca, name = "Raça/Cor") +
+      scale_fill_manual(values = cores_raca, name = "Race/Colour") +
       labs(
-        x = "Vulnerabilidade Social (IVS)",
-        y = "Casos preditos (por 1.000 NV)"
+        x = "Social Vulnerability (IVS)",
+        y = "Predicted cases (per 1,000 LB)"
       )
 
     ggsave(file.path(out_figs, "Fig12_Interacao_Raca_IVS.png"), fig_interacao,
@@ -2982,8 +2967,8 @@ message("  PIPELINE ANALÍTICA CONCLUÍDA")
 message("================================================================")
 message("")
 message("  Período de estudo: ", ANO_INICIO, "–", ANO_FIM)
-message("  Sífilis Gestacional: ", nrow(df_sifg), " registros")
-message("  Sífilis Congênita:   ", nrow(df_sifc), " registros")
+message("  Sífilis Gestational: ", nrow(df_sifg), " registros")
+message("  Sífilis Congenital:   ", nrow(df_sifc), " registros")
 message("")
 message("  PRODUTOS GERADOS:")
 message("  ─────────────────")

@@ -2,7 +2,7 @@ FLUXOGRAMA ANALÍTICO
 ====================
 
 1. FONTES DE DADOS
-   ├── SINAN (Sífilis Gestacional: SIFG, Sífilis Congênita: SIFC)
+   ├── SINAN (Sífilis Gestational: SIFG, Sífilis Congenital: SIFC)
    ├── SINASC (Nascidos Vivos — denominador)
    ├── IBGE (Malha cartográfica municipal)
    └── IPEA (Índice de Vulnerabilidade Social — IVS)
