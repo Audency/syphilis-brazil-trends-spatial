@@ -3,6 +3,7 @@ R_analysis/data/raw/*.dbc
 R_analysis/data/raw/*.DBC
 R_analysis/data/raw/*.xlsx
 R_analysis/data/processed/*.rds
+R_analysis/data/IVS/
 
 # R environment
 .Rhistory
@@ -15,12 +16,5 @@ R_analysis/data/processed/*.rds
 Thumbs.db
 ~$*
 
-# Output (regenerable from code)
-R_analysis/output/figures/*.png
-R_analysis/output/maps/*.png
-R_analysis/output/supplementary/*.png
-
-# Keep PDFs and Excel outputs
-!R_analysis/output/**/*.pdf
-!R_analysis/output/**/*.xlsx
-!R_analysis/output/**/*.txt
+# Word temp files
+Ideia do papers.docx
