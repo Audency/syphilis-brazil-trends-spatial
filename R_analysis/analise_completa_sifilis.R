@@ -671,7 +671,34 @@ indicadores_br <- casos_br %>%
   rename(nv = nv_total) %>%
   mutate(taxa_1000nv = ifelse(!is.na(nv) & nv > 0, (n_casos / nv) * 1000, NA_real_))
 
-message("  Indicators calculated.")
+# -------------------------------------------------------------------------
+# 3.4 Incidence per 100,000 inhabitants (congenital syphilis)
+# -------------------------------------------------------------------------
+# Population estimates by year (IBGE projections)
+pop_brasil_anual <- tibble(
+  ano = 2007:2023,
+  pop_total = c(
+    189800000, 191800000, 193700000, 195500000, 197400000,
+    199200000, 201000000, 202800000, 204500000, 206100000,
+    207700000, 209200000, 210700000, 212600000, 213300000,
+    214300000, 215300000
+  )
+)
+
+# Add incidence per 100,000 inhabitants to Brazil indicators
+indicadores_br <- indicadores_br %>%
+  left_join(pop_brasil_anual, by = c("ano_notif" = "ano")) %>%
+  mutate(incid_100k = (n_casos / pop_total) * 100000)
+
+# Add to UF indicators using proportional population
+indicadores_uf <- indicadores_uf %>%
+  left_join(pop_brasil_anual, by = c("ano_notif" = "ano")) %>%
+  mutate(
+    pop_uf = pop_total * prop_uf[cod_uf],
+    incid_100k = (n_casos / pop_uf) * 100000
+  )
+
+message("  Indicators calculated (rates per 1,000 LB + per 100,000 inhabitants).")
 
 # Salvar indicadores
 saveRDS(indicadores_mun, file.path(data_proc, "indicadores_municipio.rds"))
@@ -772,6 +799,26 @@ fig1_supl <- casos_br %>%
 
 ggsave(file.path(out_suppl, "FigS1_Trend_Brazil_Cases.png"), fig1_supl,
        width = 10, height = 6, dpi = 300)
+
+# Fig 1c: Incidence per 100,000 inhabitants (congenital syphilis only)
+fig1c <- indicadores_br %>%
+  filter(tipo_sifilis == "Congenital", !is.na(incid_100k)) %>%
+  ggplot(aes(x = ano_notif, y = incid_100k)) +
+  geom_line(linewidth = 1.2, color = "#7570B3") +
+  geom_point(size = 2.5, color = "#7570B3") +
+  scale_x_continuous(breaks = ANOS_ESTUDO) +
+  labs(x = "Year", y = "Incidence per 100,000 inhabitants") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Combined panel: Rate/1000 LB (A) + Incidence/100k (B)
+fig1_panel <- (fig1 + labs(tag = "A")) +
+  (fig1c + labs(tag = "B")) +
+  plot_layout(ncol = 2, widths = c(1.2, 1))
+
+ggsave(file.path(out_figs, "Fig1_Panel_Rates.png"), fig1_panel,
+       width = 14, height = 5.5, dpi = 300)
+ggsave(file.path(out_figs, "Fig1_Panel_Rates.pdf"), fig1_panel,
+       width = 14, height = 5.5)
 
 message("  Figure 1 saved.")
 
@@ -1059,38 +1106,48 @@ message("  Tabela Joinpoint completa exportada.")
 # -------------------------------------------------------------------------
 # 5.5 Figura Joinpoint — Brasil
 # -------------------------------------------------------------------------
+# Joinpoint figure using RATES (not absolute cases)
 fig_jp_brasil <- function() {
   plots <- list()
 
   for (tipo in c("Gestational", "Congenital")) {
-    chave <- paste0(tipo, "_casos")
+    # Prefer rate-based joinpoint; fallback to cases
+    chave <- paste0(tipo, "_taxa")
+    if (!chave %in% names(jp_brasil)) chave <- paste0(tipo, "_casos")
     if (!chave %in% names(jp_brasil)) next
 
     jp <- jp_brasil[[chave]]
     mod <- attr(jp, "modelo")
     dados <- indicadores_br %>% filter(tipo_sifilis == tipo)
 
-    # Predições do modelo
-    x_pred <- seq(min(dados$ano_notif), max(dados$ano_notif), length.out = 100)
-    y_pred <- predict(mod, newdata = data.frame(x = x_pred))
+    # Use taxa if available, else cases
+    use_rate <- grepl("taxa", chave)
+    y_var <- if (use_rate) "taxa_1000nv" else "n_casos"
+    y_lab <- if (use_rate) "Rate per 1,000 live births" else "Number of cases"
 
+    dados_plot <- dados %>% filter(!is.na(!!sym(y_var)))
+
+    # Predictions
+    x_pred <- seq(min(dados_plot$ano_notif), max(dados_plot$ano_notif), length.out = 100)
+    y_pred <- tryCatch(predict(mod, newdata = data.frame(x = x_pred)),
+                        error = function(e) rep(NA, length(x_pred)))
     df_pred <- tibble(ano = x_pred, pred = exp(y_pred))
 
     p <- ggplot() +
-      geom_point(data = dados, aes(x = ano_notif, y = n_casos),
+      geom_point(data = dados_plot, aes(x = ano_notif, y = !!sym(y_var)),
                  size = 3, color = ifelse(tipo == "Gestational", "#D95F02", "#7570B3")) +
-      geom_line(data = df_pred, aes(x = ano, y = pred),
-                linewidth = 1, color = "black", linetype = "solid") +
-      # Marcar joinpoints
+      geom_line(data = df_pred %>% filter(!is.na(pred)), aes(x = ano, y = pred),
+                linewidth = 1, color = "black") +
       {if (any(!is.na(jp$joinpoint)))
         geom_vline(xintercept = na.omit(jp$joinpoint),
-                   linetype = "dashed", color = "red", linewidth = 0.7)} +
-      labs(x = "Year", y = "Number of cases") +
-      # Anotar APC por segmento
+                   linetype = "dashed", color = "red", linewidth = 0.6)} +
+      scale_x_continuous(breaks = ANOS_ESTUDO) +
+      labs(x = "Year", y = y_lab) +
       annotate("text", x = jp$ano_inicio + (jp$ano_fim - jp$ano_inicio) / 2,
-               y = max(dados$n_casos) * 0.95,
+               y = max(dados_plot[[y_var]], na.rm = TRUE) * 0.95,
                label = paste0("APC=", jp$APC, "%"),
-               size = 3, fontface = "italic")
+               size = 2.8, fontface = "italic") +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
     plots[[tipo]] <- p
   }
@@ -1098,18 +1155,21 @@ fig_jp_brasil <- function() {
   if (length(plots) == 2) {
     fig <- plots[[1]] + plots[[2]] +
       plot_annotation(theme = theme(plot.title = element_blank()))
-  } else {
+  } else if (length(plots) == 1) {
     fig <- plots[[1]]
+  } else {
+    return(NULL)
   }
-
   return(fig)
 }
 
 fig_jp <- fig_jp_brasil()
-ggsave(file.path(out_figs, "Fig4_Joinpoint_Brasil.png"), fig_jp,
-       width = 14, height = 6, dpi = 300)
-ggsave(file.path(out_figs, "Fig4_Joinpoint_Brasil.pdf"), fig_jp,
-       width = 14, height = 6)
+if (!is.null(fig_jp)) {
+  ggsave(file.path(out_figs, "Fig4_Joinpoint_Brasil.png"), fig_jp,
+         width = 14, height = 6, dpi = 300)
+  ggsave(file.path(out_figs, "Fig4_Joinpoint_Brasil.pdf"), fig_jp,
+         width = 14, height = 6)
+}
 message("  Figure Joinpoint saved.")
 
 
@@ -1551,10 +1611,20 @@ if (nrow(mapa_sg) > 0) {
            width = 10, height = 12, dpi = 300)
   }
 
-  message("  Maps exported.")
+  # Combined map panel (A: rates, B: LISA)
+  map_panel <- (mapa_taxa_sg + labs(tag = "A")) +
+    (mapa_lisa_sg + labs(tag = "B")) +
+    plot_layout(ncol = 2)
+
+  ggsave(file.path(out_maps, "Map_Panel_Rate_LISA.png"), map_panel,
+         width = 16, height = 10, dpi = 300)
+  ggsave(file.path(out_maps, "Map_Panel_Rate_LISA.pdf"), map_panel,
+         width = 16, height = 10)
+
+  message("  Maps exported (including combined panel).")
 
 } else {
-  message("  AVISO: Dados espaciais insuficientes para análise.")
+  message("  WARNING: Insufficient spatial data for analysis.")
 }
 
 # Salvar objetos espaciais
