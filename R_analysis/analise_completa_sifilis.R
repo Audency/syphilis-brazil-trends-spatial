@@ -860,7 +860,7 @@ fig3 <- casos_raca %>%
   scale_x_continuous(breaks = ANOS_ESTUDO) +
   scale_y_continuous(labels = scales::percent) +
   labs(
-    title = "Distribuição proporcional por raça/cor",
+    title = "Proportional distribution by race/colour",
     subtitle = "Sífilis gestacional e congênita — Brasil",
     x = "Year", y = "Proportion",
     caption = "Fonte: SINAN/DataSUS. Excluídos registros com raça/cor ignorada."
@@ -1096,7 +1096,7 @@ jp_uf_tabela <- bind_rows(jp_uf)
 # Consolidar todos os resultados de Joinpoint
 jp_todos <- bind_rows(
   jp_brasil_tabela %>% mutate(nivel = "Brasil"),
-  jp_regiao_tabela %>% mutate(nivel = "Macrorregião"),
+  jp_regiao_tabela %>% mutate(nivel = "Macro-region"),
   jp_uf_tabela %>% mutate(nivel = "UF")
 )
 
@@ -1792,8 +1792,8 @@ fig_ivs <- dados_ivs %>%
   scale_y_continuous(trans = "log1p",
                      breaks = c(0, 1, 5, 10, 25, 50, 100)) +
   labs(
-    title = "Taxas de sífilis por nível de vulnerabilidade social (IVS)",
-    subtitle = glue("Municípios brasileiros, {ANO_INICIO}–{ANO_FIM}"),
+    title = "Syphilis rates by social vulnerability level (IVS)",
+    subtitle = glue("Brazilian municipalities, {ANO_INICIO}–{ANO_FIM}"),
     x = "IVS category", y = "Rate/1,000 LB (log scale)",
     caption = "Fonte: SINAN/DataSUS + IVS/IPEA"
   ) +
@@ -1956,7 +1956,7 @@ if (nrow(df_sifg) > 0 && "ivs_geral" %in% names(ivs)) {
     scale_fill_manual(values = cores_raca, name = "Race/Colour") +
     scale_y_continuous(labels = scales::percent) +
     labs(
-      title = "Distribuição racial dos casos de sífilis gestacional por nível de IVS",
+      title = "Racial distribution of gestational syphilis cases by IVS level",
       x = "Social Vulnerability (IVS)", y = "Proportion",
       caption = "Fonte: SINAN/DataSUS + IVS/IPEA"
     )
@@ -2131,20 +2131,20 @@ resultados_modelos <- list()
 # Modelo Poisson/BN
 if (exists("mod2_bn")) {
   tidy_mod2 <- broom::tidy(mod2_bn, exponentiate = TRUE, conf.int = TRUE) %>%
-    mutate(modelo = "Binomial Negativa (IVS geral)")
+    mutate(modelo = "Negative Binomial (IVS overall)")
   resultados_modelos[["BN"]] <- tidy_mod2
 }
 
 if (exists("mod3_bn_dim")) {
   tidy_mod3 <- broom::tidy(mod3_bn_dim, exponentiate = TRUE, conf.int = TRUE) %>%
-    mutate(modelo = "Binomial Negativa (IVS dimensões)")
+    mutate(modelo = "Negative Binomial (IVS dimensions)")
   resultados_modelos[["BN_dim"]] <- tidy_mod3
 }
 
 if (exists("mod4_multinivel")) {
   tidy_mod4 <- broom.mixed::tidy(mod4_multinivel, exponentiate = TRUE,
                                    conf.int = TRUE) %>%
-    mutate(modelo = "GLMM Multinível")
+    mutate(modelo = "GLMM Multilevel")
   resultados_modelos[["GLMM"]] <- tidy_mod4
 }
 
@@ -2185,29 +2185,29 @@ dicionario <- tibble(
     "ivs_geral", "ivs_infraestrutura", "ivs_capital_humano", "ivs_renda_trabalho",
     "ivs_cat", "ivs_quintil", "cluster_lisa", "razao_sc_sg"
   ),
-  Descricao = c(
-    "Year of notification", "Código IBGE do município (6 dígitos)",
-    "Código da UF (2 dígitos)", "Macrorregião do Brasil",
-    "Raça/cor (autorreferida/mãe)", "Tipo: Gestational ou Congenital",
-    "Número de casos notificados", "Nascidos vivos (denominador)",
-    "Taxa por 1.000 nascidos vivos (bruta)",
-    "Taxa suavizada por Bayes empírico (/1.000 NV)",
-    "Índice de Vulnerabilidade Social (IPEA) — geral",
-    "IVS — dimensão Infraestrutura Urbana",
-    "IVS — dimensão Capital Humano",
-    "IVS — dimensão Renda e Trabalho",
-    "Categoria de IVS (muito baixa a muito alta)",
-    "Quintil de IVS (1=menos vulnerável, 5=mais vulnerável)",
-    "Classificação LISA (High-High, Low-Low, etc.)",
-    "Razão sífilis congênita / sífilis gestacional"
+  Description = c(
+    "Year of notification", "IBGE municipality code (6 digits)",
+    "State code (2 digits)", "Macro-region of Brazil",
+    "Race/colour (self-reported/maternal)", "Type: Gestational or Congenital",
+    "Number of notified cases", "Live births (denominator)",
+    "Crude rate per 1,000 live births",
+    "Empirical Bayes smoothed rate (/1,000 LB)",
+    "Social Vulnerability Index (IPEA) — overall",
+    "IVS — Urban Infrastructure dimension",
+    "IVS — Human Capital dimension",
+    "IVS — Income and Labour dimension",
+    "IVS category (very low to very high)",
+    "IVS quintile (1=least vulnerable, 5=most vulnerable)",
+    "LISA classification (High-High, Low-Low, etc.)",
+    "Congenital/gestational syphilis ratio"
   ),
-  Fonte = c(
-    "SINAN", "SINAN/IBGE", "SINAN/IBGE", "Derivada",
-    "SINAN", "Derivada", "SINAN", "SINASC",
-    "Calculada", "Calculada (Bayes empírico)",
+  Source = c(
+    "SINAN", "SINAN/IBGE", "SINAN/IBGE", "Derived",
+    "SINAN", "Derived", "SINAN", "SINASC",
+    "Calculated", "Calculated (Empirical Bayes)",
     "IPEA", "IPEA", "IPEA", "IPEA",
-    "Derivada do IVS", "Derivada do IVS",
-    "Calculada (spdep)", "Calculada"
+    "Derived from IVS", "Derived from IVS",
+    "Calculated (spdep)", "Calculated"
   ),
   Tipo = c(
     "Integer", "Character", "Character", "Character",
@@ -2260,7 +2260,7 @@ fig_uf_panel <- casos_uf %>%
   ) +
   scale_x_continuous(breaks = ANOS_ESTUDO) +
   labs(
-    title = "Tendência temporal por Unidade da Federação",
+    title = "Temporal trends by State",
     subtitle = glue("Sífilis gestacional e congênita, {ANO_INICIO}–{ANO_FIM}"),
     x = "Year", y = "Cases",
     caption = "Fonte: SINAN/DataSUS"

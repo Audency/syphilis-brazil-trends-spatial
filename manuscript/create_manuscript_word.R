@@ -269,13 +269,13 @@ refs <- c(
   "5. World Health Organization. Global guidance on criteria and processes for validation: elimination of MTCT of HIV, syphilis and hepatitis B. Geneva: WHO; 2021.",
   "6. Wijesooriya NS, Rochat RW, Kamb ML, et al. Global burden of maternal and congenital syphilis in 2008 and 2012. Lancet Glob Health. 2016;4(8):e525-533.",
   "7. Brasil. Ministerio da Saude. Boletim Epidemiologico de Sifilis 2023. Brasilia: SVS; 2023.",
-  "8. Benzaken AS, Pereira GFM, Cunha ARCD, et al. Adequacy of prenatal care, diagnosis and treatment of syphilis in pregnancy. Rev Saude Publica. 2020;54:97.",
+  "8. Benzaken AS, Pereira GFM, Cunha ARCD, et al. Adequacy of prenatal care, diagnosis and treatment of syphilis in pregnancy: a study with open data from Brazilian state capitals. Cad Saude Publica. 2020;36(1):e00057219.",
   "9. Brasil. Ministerio da Saude. SINAN. Available at: http://tabnet.datasus.gov.br.",
   "10. Brasil. Portaria 1.459/2011. Institui a Rede Cegonha. Diario Oficial da Uniao. 2011.",
   "11. Brasil. Agenda de Acoes Estrategicas para Reducao da Sifilis no Brasil. Brasilia; 2017.",
-  "12. Araujo MAL, Barros VL, Nunes NB, et al. Penicillin shortage and congenital syphilis. Rev Inst Med Trop Sao Paulo. 2020;62:e35.",
+  "12. Araujo MAL, Freitas SCR, Gomes KRO, et al. Treatment administered to newborns with congenital syphilis during a penicillin shortage in 2015, Fortaleza, Brazil. BMC Pediatr. 2021;21:162.",
   "13. Taylor MM, Zhang X, Nurse-Findlay S, et al. The amount of penicillin needed to prevent mother-to-child transmission of syphilis. Bull World Health Organ. 2016;94(8):559-559A.",
-  "14. Bezerra MLMB, Fernandes FECV, Nunes JPO, et al. Congenital syphilis as a measure of maternal and child healthcare. Rev Saude Publica. 2019;53:43.",
+  "14. Bezerra MLMB, Fernandes FECV, Nunes JPO, et al. Congenital syphilis as a measure of maternal and child healthcare, Brazil. Emerg Infect Dis. 2019;25(8):1469-1476.",
   "15. Macedo VC, Lira PIC, Frias PG, et al. Risk factors for syphilis in women: case-control study. Rev Saude Publica. 2017;51:78.",
   "16. Figueiredo DCMM, Figueiredo AM, Souza TKB, et al. Temporal analysis of congenital syphilis in Brazil, 2006-2019. JBRA Assist Reprod. 2020;24(4):445-453.",
   "17. Teixeira LO, Belarmino V, Goncalves CV, et al. Temporal trend and spatial distribution of congenital syphilis in Brazil, 2001-2018. Rev Soc Bras Med Trop. 2021;54:e0596-2020.",
@@ -301,12 +301,12 @@ refs <- c(
   "37. Domingues RMSM, Leal MC. Incidence of congenital syphilis and factors associated with vertical transmission: Birth in Brazil study. Cad Saude Publica. 2016;32(6):e00082415.",
   "38. Victora CG, Aquino EML, do Carmo Leal M, et al. Maternal and child health in Brazil: progress and challenges. Lancet. 2011;377(9780):1863-1876.",
   "39. Paim J, Travassos C, Almeida C, et al. The Brazilian health system: history, advances, and challenges. Lancet. 2011;377(9779):1778-1797.",
-  "40. Werneck J. Racism and health: the case of Brazil. J Public Health Policy. 2016;37(Suppl 1):27-36.",
+  "40. Werneck J. Racismo institucional e saude da populacao negra. Saude Soc. 2016;25(3):535-549.",
   "41. Krieger N. Measures of racism, sexism, heterosexism, and gender binarism for health equity research. Annu Rev Public Health. 2020;41:37-62.",
-  "42. Pinto M, Melo C, Costa A, et al. Impact of COVID-19 on syphilis surveillance in Brazil. Lancet Reg Health Am. 2022;12:100265.",
+  "42. Pinto M, Tancredi MV, Alencar HDR, et al. Use of interrupted time series analysis in understanding the course of the congenital syphilis epidemic in Brazil. Lancet Reg Health Am. 2022;7:100163.",
   "43. Marques CP, Geremia DS, Siqueira BB, et al. Impact of COVID-19 on prenatal care: integrative review. Cienc Saude Coletiva. 2023;28(9):2621-2635.",
   "44. Morgenstern H. Ecologic studies in epidemiology: concepts, principles, and methods. Annu Rev Public Health. 1995;16:61-81.",
-  "45. De Boni RB, Veloso VG, Grinsztejn B. Epidemiology of syphilis in Brazil and its relationship to social vulnerability. Braz J Infect Dis. 2021;25(1):101039."
+  "45. Cunha AP, Cruz MM, Torres RMC. Trends in congenital syphilis prevalence in Brazil, 2012-2021: an ecological study. Epidemiol Serv Saude. 2023;32(3):e2023046."
 )
 
 for (ref in refs) {
